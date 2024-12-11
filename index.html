@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Encryption Tool</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(to right, #00c6ff, #0072ff);
+            margin: 0;
+            padding: 20px;
+            color: #fff;
+            animation: fadeIn 1s;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s;
+        }
+        .container:hover {
+            transform: scale(1.02);
+        }
+        label {
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        textarea, input[type="text"], select {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 5px;
+            box-sizing: border-box;
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+            transition: background 0.3s;
+        }
+        textarea:focus, input[type="text"]:focus, select:focus {
+            background: rgba(255, 255, 255, 0.3);
+            outline: none;
+        }
+        button {
+            background-color: #ff4081;
+            color: white;
+            padding: 12px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 16px;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background-color: #ff1f5b;
+        }
+        .hidden {
+            display: none;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: rgba(255, 255, 255, 0.2);
+            border-left: 6px solid #ff4081;
+            border-radius: 5px;
+        }
+        footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.9em;
+            color: #ddd;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Encryption Tool</h1>
+        
+        <label for="textInput">Enter Text:</label>
+        <textarea id="textInput" rows="4" placeholder="Type your text here..."></textarea>
+        
+        <label for="cipherType">Select Cipher Type:</label>
+        <select id="cipherType" onchange="toggleKeyInput()">
+            <option value="">Select Cipher Type</option>
+            <option value="playfair">Playfair</option>
+            <option value="transposition">Transposition</option>
+            <option value="vigenere">Vigenere</option>
+            <option value="caesar">Caesar</option>
+        </select>
+        
+        <div id="keyInputContainer" class="hidden">
+            <label for="keyInput">Enter Encryption Key:</label>
+            <input type="text" id="keyInput" placeholder="Type your encryption key here...">
+        </div>
+        
+        <button onclick="encryptText()">Encrypt Text</button>
+        
+        <div class="result">
+            <h2>Encrypted Text:</h2>
+            <p id="encryptedText"></p>
+        </div>
+    </div>
+
+    <footer>
+        &copy; 2023 Encryption Tool. All rights reserved.
+    </footer>
+
+    <script>
+        function toggleKeyInput() {
+            const cipherType = document.getElementById("cipherType").value;
+            const keyInputContainer = document.getElementById("keyInputContainer");
+            if (cipherType === "playfair" || cipherType === "vigenere" || cipherType === "caesar") {
+                keyInputContainer.classList.remove("hidden");
+            } else {
+                keyInputContainer.classList.add("hidden");
+            }
+        }
+
+        function encryptText() {
+            const text = document.getElementById("textInput").value;
+            const cipherType = document.getElementById("cipherType").value;
+            const key = document.getElementById("keyInput").value;
+            let encryptedText = "";
+
+            switch (cipherType) {
+                case "playfair":
+                    encryptedText = playfairCipher(text, key);
+                    break;
+                case "transposition":
+                    encryptedText = transpositionCipher(text);
+                    break;
+                case "vigenere":
+                    encryptedText = vigenereCipher(text, key, 'encrypt');
+                    break;
+                case "caesar":
+                    const shift = parseInt(key) || 0; // Default to 0 if not a number
+                    encryptedText = caesarCipher(text, shift);
+                    break;
+                default:
+                    encryptedText = "Please select a cipher type.";
+            }
+
+            document.getElementById("encryptedText").innerText = encryptedText;
+        }
+
+        function caesarCipher(text, shift) {
+            return text.split('').map(char => {
+                if (char.match(/[a-zA-Z]/)) {
+                    const base = char === char.toUpperCase() ? 65 : 97;
+                    return String.fromCharCode((char.charCodeAt(0) - base + shift + 26) % 26 + base);
+                }
+                return char;
+            }).join('');
+        }
+
+        function vigenereCipher(text, key, action) {
+            let result = '';
+            let j = 0;
+            const direction = action === 'encrypt' ? 1 : -1;
+            for (let i = 0; i < text.length; i++) {
+                let char = text[i];
+                if (char.match(/[a-zA-Z]/)) {
+                    const base = char === char.toUpperCase() ? 65 : 97;
+                    const shift = direction * (key[j % key.length].toLowerCase().charCodeAt(0) - 97);
+                    result += String.fromCharCode((char.charCodeAt(0) - base + shift + 26) % 26 + base);
+                    j++;
+                } else {
+                    result += char;
+                }
+            }
+            return result;
+        }
+
+        function transpositionCipher(text) {
+            return text.split('').reverse().join('');
+        }
+
+        function playfairCipher(text, key) {
+            let grid = generatePlayfairGrid(key);
+            let pairs = prepareTextForPlayfair(text);
+            let encryptedText = '';
+            pairs.forEach(pair => {
+                let [char1, char2] = pair;
+                let [row1, col1] = findCharPosition(char1, grid);
+                let [row2, col2] = findCharPosition(char2, grid);
+
+                if (row1 === row2) {
+                    encryptedText += grid[row1 * 5 + (col1 + 1) % 5];
+                    encryptedText += grid[row2 * 5 + (col2 + 1) % 5];
+                } else if (col1 === col2) {
+                    encryptedText += grid[((row1 + 1) % 5) * 5 + col1];
+                    encryptedText += grid[((row2 + 1) % 5) * 5 + col2];
+                } else {
+                    encryptedText += grid[row1 * 5 + col2];
+                    encryptedText += grid[row2 * 5 + col1];
+                }
+            });
+            return encryptedText;
+        }
+
+        function generatePlayfairGrid(key) {
+            key = key.toLowerCase().replace(/[^a-z]/g, '').replace(/j/g, 'i');
+            let grid = 'abcdefghiklmnopqrstuvwxyz'.split('');
+            let used = new Set();
+            let finalGrid = [];
+            key.split('').forEach(char => {
+                if (!used.has(char)) {
+                    used.add(char);
+                    finalGrid.push(char);
+                }
+            });
+            grid.forEach(char => {
+                if (!used.has(char)) {
+                    used.add(char);
+                    finalGrid.push(char);
+                }
+            });
+            return finalGrid;
+        }
+
+        function prepareTextForPlayfair(text) {
+            text = text.toLowerCase().replace(/[^a-z]/g, '');
+            let pairs = [];
+            for (let i = 0; i < text.length; i += 2) {
+                let first = text[i];
+                let second = text[i + 1] || 'x';
+                if (first === second) {
+                    second = 'x';
+                    i--;
+                }
+                pairs.push([first, second]);
+            }
+            return pairs }
+
+        function findCharPosition(char, grid) {
+            let index = grid.indexOf(char);
+            return [Math.floor(index / 5), index % 5];
+        }
+    </script>
+</body>
+</html>
